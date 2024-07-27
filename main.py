@@ -59,7 +59,7 @@ class MatplotlibWidget(QMainWindow):
         # Call Shuffle method when clicked
         self.btn_Shuffle.clicked.connect(self.Shuffle_bars)
 
-    def new_frame(self, highlight_bar):
+    def new_frame(self, highlight_bar, updated_bar_color=None):
 
         # Sleep to create a more pleasing animation
         time.sleep(self.ani_time())
@@ -68,7 +68,12 @@ class MatplotlibWidget(QMainWindow):
         # Create colour list to indicate which bar is highlighted
         bar_color = ["#00A7E1"] * (len(self.ydata)-1)
         bar_color.insert(highlight_bar, "#ffa500")
-
+        if updated_bar_color:
+            for ubc in updated_bar_color:
+                if ubc != 0:
+                    bar_color[ubc-1] = "#29E100"
+                else:
+                    bar_color[ubc] = "#29E100"
         self.draw_graph(self.xdata, self.ydata, bar_color)
 
         # Process pending envents for the MPL graph
@@ -145,6 +150,7 @@ class MatplotlibWidget(QMainWindow):
         # Copy dataset
         yarray = self.ydata.copy()
 
+        updated_bar_color = []
         # Disable buttons
         self.buttons(False)
         self.status.setText("Bubble Sort Processing!")
@@ -157,13 +163,13 @@ class MatplotlibWidget(QMainWindow):
 
             # Determine new endpoint as last i elements will be sorted (efficientcy)
             endp = len(yarray) - i
-            last_j = None
+            sorted_j = None
             # Iterate over new resized dataset
             for j in range(0, endp):
 
                 # Prevent loop reaching out of list
                 if j+1 == len(yarray):
-                    pass
+                    sorted_j = j + 1
                 else:
                     if yarray[j] > yarray[j+1]:
 
@@ -174,7 +180,13 @@ class MatplotlibWidget(QMainWindow):
                         self.ydata = yarray
 
                         # Call to update graph
-                        self.new_frame(j+1)
+                        self.new_frame(j+1, updated_bar_color)
+                        sorted_j = j
+                    else:
+                        sorted_j = j + 1
+
+            updated_bar_color.append(sorted_j)
+            self.new_frame(sorted_j, updated_bar_color)
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
@@ -183,50 +195,28 @@ class MatplotlibWidget(QMainWindow):
     def insertSort(self):
         # Get class variable
         yarray = self.ydata.copy()
-        self.status.setText("Insertion Sort Processing!")
+        updated_bar_color = []
         # Disable buttons
         self.buttons(False)
+        self.status.setText("Insertion Sort Processing!")
 
         # Disable spin box
         self.spnBars.setDisabled(True)
+        updated_bar_color.append(0)
+        count = 1
+        for i in range(1, len(yarray)):  # Iterate over the array starting from the second element
+            key = yarray[i]  # Store the current element as the key to be inserted in the right position
+            j = i-1
+            while j >= 0 and key < yarray[j]:  # Move elements greater than key one position ahead
+                yarray[j+1] = yarray[j]  # Shift elements to the right
+                j -= 1
+                self.ydata = yarray
+                self.new_frame(j, updated_bar_color)
+            yarray[j+1] = key  # Insert the key in the correct position
+            count += 1
+            updated_bar_color.append(count)
+        self.new_frame(count, updated_bar_color)
 
-        # Loop through list
-        for i in range(len(yarray)):
-
-            if (i+1) == len(yarray):
-                # Prevent reading out of list
-                break
-            else:
-                # If pair not in ascending order
-                if yarray[i] > yarray[i+1]:
-                    # Using Swaping method for better animation / demostration. Delete and insert method is commented
-
-                    # # Delete and Insert method---------------------------------------------
-                    # # Read and remove
-                    # temp = yarra.pop(i+1)
-
-                    # for j in range(i+1):
-                    #     if yarray[j] > temp:
-                    #
-                    #         # Find first elem that is bigger than Temp, insert at that position, shift the rest down
-                    #         index = j
-                    #         yarray.insert(index, temp)
-                    #         self.new_frame(j)
-                    #         break
-
-                    # Swap method -----------------------------------------------------------
-                    # Find the right place for the elem, from beginning till current spot in list
-                    for k in reversed(range(i+1)):
-                        if yarray[k+1] < yarray[k]:
-                            yarray[k], yarray[k+1] = yarray[k+1] , yarray[k]
-
-                            # Update class var
-                            self.ydata = yarray
-
-                            # Update graph
-                            self.new_frame(k)
-                        else:
-                            break
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
@@ -246,7 +236,8 @@ class MatplotlibWidget(QMainWindow):
 
         # Update class var
         self.ydata = yarray
-        self.new_frame(0)
+        updated_bar_color = yarray
+        self.new_frame(0, updated_bar_color)
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
@@ -314,6 +305,8 @@ class MatplotlibWidget(QMainWindow):
         return(sorted_arr)
 
     def selectSort(self):
+        updated_bar_color = []
+        last_j = None
         # Get class variable
         yarray = self.ydata.copy()
         self.status.setText("Selection Sort Processing!")
@@ -337,10 +330,12 @@ class MatplotlibWidget(QMainWindow):
                 elif yarray[j] < holder:
                     holder = yarray[j]
 
+                sorted_j = j
                 # Show iteration
-                self.new_frame(j)
+                self.new_frame(j, updated_bar_color)
+                last_j = j
 
-            # Read and insert lowest bar into sorted part
+            # Read and insert least bar into sorted part
             shifter_index = yarray.index(holder)
             yarray.pop(shifter_index)
             yarray.insert(i, holder)
@@ -348,43 +343,48 @@ class MatplotlibWidget(QMainWindow):
             # Update class var & graph
             self.ydata = yarray
 
+            updated_bar_color.append(i+1)
             # Update graph
-            self.new_frame(shifter_index)
+            self.new_frame(shifter_index, updated_bar_color)
+            # self.new_frame(shifter_index)
+        self.new_frame(last_j, updated_bar_color)
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
         self.status.setText("Selection Sort Done!")
 
-    def partition(self, arr, start, end):
+    def partition(self, arr, start, end, updated_bar_color):
         pivot = arr[end]
         pIndex = start
         for i in range(start, end):
             if arr[i] <= pivot:
                 arr[pIndex], arr[i] = arr[i], arr[pIndex]
+                # updated_bar_color.append(pIndex)
                 pIndex += 1
-                self.new_frame(i)
+                self.new_frame(i, updated_bar_color)
         arr[pIndex], arr[end] = arr[end], arr[pIndex]
-        self.new_frame(pIndex)
+        updated_bar_color.append(pIndex)
+        self.new_frame(pIndex, updated_bar_color)
         return pIndex
 
-    def quickSortImplementation(self, arr, start, end):
+    def quickSortImplementation(self, arr, start, end, updated_bar_color):
         if start < end:
-            pIndex = self.partition(arr, start, end)
-            self.quickSortImplementation(arr, start, pIndex-1)
-            self.quickSortImplementation(arr, pIndex+1, end)
+            pIndex = self.partition(arr, start, end, updated_bar_color)
+            self.quickSortImplementation(arr, start, pIndex-1, updated_bar_color)
+            self.quickSortImplementation(arr, pIndex+1, end, updated_bar_color)
 
     def quickSort(self):
         arr = self.ydata
         start = 0
         end = len(arr) - 1
+        updated_bar_color = []
         self.status.setText("Quick Sort Processing!")
         # Disable buttons
         self.buttons(False)
 
         # Disable spin box
         self.spnBars.setDisabled(True)
-
-        self.quickSortImplementation(arr, start, end)
+        self.quickSortImplementation(arr, start, end, updated_bar_color)
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
