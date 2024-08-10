@@ -4,7 +4,7 @@ Sorting Algorithm : Bubble Sort, Selection Sort, Merge Sort, Insertion Sort, Qui
 '''
 import random
 import time
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 import matplotlib.pyplot as plt
@@ -66,14 +66,14 @@ class MatplotlibWidget(QMainWindow):
         self.MplWidget.canvas.axes.clear()
 
         # Create colour list to indicate which bar is highlighted
-        bar_color = ["#00A7E1"] * (len(self.ydata)-1)
+        bar_color = ["#E85853"] * (len(self.ydata)-1)
         bar_color.insert(highlight_bar, "#ffa500")
         if updated_bar_color:
             for ubc in updated_bar_color:
                 if ubc != 0:
-                    bar_color[ubc-1] = "#29E100"
+                    bar_color[ubc-1] = "#6FE853"
                 else:
-                    bar_color[ubc] = "#29E100"
+                    bar_color[ubc] = "#6FE853"
         self.draw_graph(self.xdata, self.ydata, bar_color)
 
         # Process pending envents for the MPL graph
@@ -131,7 +131,7 @@ class MatplotlibWidget(QMainWindow):
     def draw_graph(self, xs, ys, bar_color):
         # Draw graph from x-list and y-list
         if bar_color is None:
-            self.MplWidget.canvas.axes.bar(xs, ys, color="#00A7E1")
+            self.MplWidget.canvas.axes.bar(xs, ys, color="#E85853")
         else:
             # Color parameter will highlight selected bar (Bar that is being moved)
             self.MplWidget.canvas.axes.bar(xs, ys, color=bar_color)
@@ -353,7 +353,7 @@ class MatplotlibWidget(QMainWindow):
         self.spnBars.setDisabled(False)
         self.status.setText("Selection Sort Done!")
 
-    def partition(self, arr, start, end, updated_bar_color):
+    def partition(self, arr, start, end):
         pivot = arr[end]
         pIndex = start
         for i in range(start, end):
@@ -361,30 +361,30 @@ class MatplotlibWidget(QMainWindow):
                 arr[pIndex], arr[i] = arr[i], arr[pIndex]
                 # updated_bar_color.append(pIndex)
                 pIndex += 1
-                self.new_frame(i, updated_bar_color)
+                self.new_frame(i)
         arr[pIndex], arr[end] = arr[end], arr[pIndex]
-        updated_bar_color.append(pIndex)
-        self.new_frame(pIndex, updated_bar_color)
+        # updated_bar_color.append(pIndex)
+        self.new_frame(pIndex)
         return pIndex
 
-    def quickSortImplementation(self, arr, start, end, updated_bar_color):
+    def quickSortImplementation(self, arr, start, end, ):
         if start < end:
-            pIndex = self.partition(arr, start, end, updated_bar_color)
-            self.quickSortImplementation(arr, start, pIndex-1, updated_bar_color)
-            self.quickSortImplementation(arr, pIndex+1, end, updated_bar_color)
+            pIndex = self.partition(arr, start, end)
+            self.quickSortImplementation(arr, start, pIndex-1)
+            self.quickSortImplementation(arr, pIndex+1, end)
 
     def quickSort(self):
         arr = self.ydata
         start = 0
         end = len(arr) - 1
-        updated_bar_color = []
+        # updated_bar_color = []
         self.status.setText("Quick Sort Processing!")
         # Disable buttons
         self.buttons(False)
 
         # Disable spin box
         self.spnBars.setDisabled(True)
-        self.quickSortImplementation(arr, start, end, updated_bar_color)
+        self.quickSortImplementation(arr, start, end)
 
         self.buttons(True)
         self.spnBars.setDisabled(False)
@@ -395,3 +395,4 @@ window = MatplotlibWidget()
 window.Shuffle_bars()
 window.show()
 app.exec_()
+
